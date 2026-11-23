@@ -16,5 +16,67 @@
     "id": "03436628-4d9d-4bb1-a191-bad6434075fb",
     "data_criacao": "2026-11-23T15:37:29.288941",
     "tratado": false
+  },
+  {
+    "nome": "Mariana Souza",
+    "contato": "(14) 99777-1122",
+    "pedido_id": "OUR-5021",
+    "estrelas": 5,
+    "comentario": "Melhor hambúrguer de Ourinhos! A maionese temperada e a carne no ponto perfeito, entrega muito antes do previsto.",
+    "sentimento": "Positivo",
+    "tags": [
+      "Entrega",
+      "Sabor"
+    ],
+    "resumo": "Feedback classificado localmente como Positivo",
+    "justificativa": "Análise determinística de contingência local por regras léxicas e estrelas",
+    "provedor": "Contingência Determinística Local",
+    "tratado": false,
+    "alerta_disparado": false,
+    "alerta_metodo": "nenhum",
+    "id": "a4750481-1e0a-4ec7-a08e-05041101ae97",
+    "data_criacao": "2026-11-23T15:53:35.521226"
+  },
+  {
+    "nome": "Rodrigo Almeida",
+    "contato": "(14) 98888-3344",
+    "pedido_id": "OUR-5022",
+    "estrelas": 3,
+    "comentario": "O lanche é gostoso, mas achei que a quantidade de batata frita poderia ser um pouco maior pelo preço cobrado.",
+    "sentimento": "Neutro",
+    "tags": [
+      "Sabor",
+      "Preço",
+      "Batata Frita"
+    ],
+    "resumo": "Feedback classificado localmente como Neutro",
+    "justificativa": "Análise determinística de contingência local por regras léxicas e estrelas",
+    "provedor": "Contingência Determinística Local",
+    "tratado": false,
+    "alerta_disparado": false,
+    "alerta_metodo": "nenhum",
+    "id": "a7fb322d-02dd-473d-86ee-fa16a0eebd97",
+    "data_criacao": "2026-11-23T15:54:06.522160"
+  },
+  {
+    "nome": "Fernanda Lima",
+    "contato": "(14) 99111-5566",
+    "pedido_id": "OUR-5023",
+    "estrelas": 1,
+    "comentario": "Péssima experiência! O pedido atrasou 1 hora e 20 minutos, veio totalmente gelado, refrigerante quente e o lanche errado sem queijo. Exijo meu dinheiro de volta!",
+    "sentimento": "Crítico",
+    "tags": [
+      "Entrega",
+      "Sabor"
+    ],
+    "resumo": "Feedback classificado localmente como Crítico",
+    "justificativa": "Análise determinística de contingência local por regras léxicas e estrelas",
+    "provedor": "Contingência Determinística Local",
+    "tratado": true,
+    "alerta_disparado": true,
+    "alerta_metodo": "fallback_log",
+    "id": "c2ee71a6-0b87-46dc-8170-e04f905f797d",
+    "data_criacao": "2026-11-23T15:54:52.697506",
+    "data_tratamento": "2026-11-23T15:54:52.754931"
   }
 ]

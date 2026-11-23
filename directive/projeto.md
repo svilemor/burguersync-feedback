@@ -97,3 +97,11 @@ Desenvolver um sistema web completo para coletar, analisar e gerenciar avaliaç�
 3. **Resiliência e Integridade no Disparo de Alertas (SMTP):**
    - O disparo de e-mails conta com fallback automático para gravação estruturada em `.tmp/alerts.log` quando credenciais SMTP não forem informadas ou em quedas de rede externa.
    - Consolidação rigorosa dos dados do cliente (`nome`, `contato`, `pedido_id`, `comentario`) antes do acionamento do serviço de alerta, garantindo que nenhum e-mail seja despachado com dados anônimos ou em branco quando fornecidos pelo cliente.
+
+4. **Tratamento de Picos de Demanda (HTTP 503) e Transição de Modelos:**
+   - Detectado que modelos como `gemini-2.0-flash` e `gemini-2.5-flash` estão descontinuados ou restritos para novas contas, enquanto `gemini-3.8-flash` e `gemini-3.6-flash` podem apresentar instabilidade de alta demanda (HTTP 503).
+   - A Camada 3 implementou uma esteira de tentativas com chaveamento de modelos e contingência determinística léxica local, assegurando que o sistema processe 100% dos feedbacks e nunca perca alertas gerenciais mesmo com a nuvem offline.
+
+5. **Deploy e Hospedagem em Nuvem:**
+   - Repositório remoto sincronizado em `https://github.com/svilemor/burguersync-feedback`.
+   - Frontend público e dashboard administrativo publicados via GitHub Pages em `https://svilemor.github.io/burguersync-feedback/`.
