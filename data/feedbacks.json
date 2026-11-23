@@ -1,0 +1,20 @@
+[
+  {
+    "nome": "Carlos Silva",
+    "contato": "(14) 99999-1234",
+    "pedido_id": "OUR-4091",
+    "estrelas": 1,
+    "comentario": "O hamburguer veio completamente queimado, gelado e sem o bacon.",
+    "sentimento": "Crítico",
+    "tags": [
+      "Sabor"
+    ],
+    "resumo": "Feedback classificado localmente como Crítico",
+    "justificativa": "Análise determinística de contingência local por regras léxicas e estrelas",
+    "provedor": "Contingência Determinística Local",
+    "status": "fallback",
+    "id": "03436628-4d9d-4bb1-a191-bad6434075fb",
+    "data_criacao": "2026-11-23T15:37:29.288941",
+    "tratado": false
+  }
+]

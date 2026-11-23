@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BurguerSync Ourinhos - Painel Administrativo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barra de Navegação -->
+  <header class="navbar">
+    <a href="dashboard.html" class="brand">
+      <div class="brand-icon">🍔</div>
+      <div class="brand-text">
+        <h1>BurguerSync Gerência</h1>
+        <span>Painel de Inteligência de Feedbacks (Ourinhos)</span>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html" class="nav-btn nav-btn-outline" target="_blank">
+        🔗 Formulário Público
+      </a>
+      <button id="btnRefresh" class="nav-btn nav-btn-outline" title="Recarregar Dados">
+        🔄 Atualizar
+      </button>
+      <button id="btnConfigApi" class="nav-btn nav-btn-outline" title="Configurar URL da API">
+        ⚙️ API
+      </button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- Banner de Alerta para Crises Pendentes -->
+    <div id="crisisBanner" style="display: none;" class="alert-box alert-error">
+      <div>
+        <strong>🚨 ATENÇÃO GERENCIAL:</strong>
+        <span id="crisisBannerText">Existem feedbacks com sentimento CRÍTICO pendentes de tratamento imediato!</span>
+      </div>
+    </div>
+
+    <!-- Cards de Métricas Principais -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <span class="metric-title">Total de Avaliações</span>
+        <span class="metric-value" id="valTotal">0</span>
+        <span class="metric-sub" id="valSubTotal">Registradas no sistema</span>
+      </div>
+
+      <div class="metric-card metric-pos">
+        <span class="metric-title">Positivas</span>
+        <span class="metric-value" id="valPositivos" style="color: var(--status-pos);">0</span>
+        <span class="metric-sub" id="valPosPct">0% do total</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-title">Neutras</span>
+        <span class="metric-value" id="valNeutros" style="color: var(--status-neu);">0</span>
+        <span class="metric-sub" id="valNeuPct">0% do total</span>
+      </div>
+
+      <div class="metric-card metric-crit">
+        <span class="metric-title">Críticas (Crises)</span>
+        <span class="metric-value" id="valCriticos" style="color: var(--status-crit);">0</span>
+        <span class="metric-sub" id="valCritPendentes">0 pendentes de ação</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-title">Média de Satisfação</span>
+        <span class="metric-value" id="valMediaEstrelas" style="color: var(--accent-gold);">★ 0.0</span>
+        <span class="metric-sub">Base 1 a 5 estrelas</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-title">Taxa de Resolução</span>
+        <span class="metric-value" id="valResolucao" style="color: #a855f7;">0%</span>
+        <span class="metric-sub" id="valTratadosCount">0 tratados</span>
+      </div>
+    </section>
+
+    <!-- Barra de Ferramentas e Filtros -->
+    <section class="toolbar-card">
+      <div class="filters-group">
+        <!-- Filtro por Sentimento -->
+        <select id="filterSentimento" class="form-select">
+          <option value="Todos">Todos os Sentimentos</option>
+          <option value="Positivo">🟢 Apenas Positivos</option>
+          <option value="Neutro">🔵 Apenas Neutros</option>
+          <option value="Crítico">🔴 Apenas Críticos</option>
+        </select>
+
+        <!-- Filtro por Status de Tratamento -->
+        <select id="filterStatus" class="form-select">
+          <option value="todos">Todos os Status</option>
+          <option value="pendente">⏳ Pendentes de Ação</option>
+          <option value="tratado">✅ Tratados / Resolvidos</option>
+        </select>
+
+        <!-- Filtro por Tag -->
+        <select id="filterTag" class="form-select">
+          <option value="Todas">Todas as Tags</option>
+        </select>
+
+        <!-- Ordenação -->
+        <select id="filterOrdenacao" class="form-select">
+          <option value="desc">Mais Recentes Primeiro</option>
+          <option value="asc">Mais Antigos Primeiro</option>
+        </select>
+      </div>
+
+      <!-- Campo de Busca Livre -->
+      <div class="search-group">
+        <input type="text" id="searchInput" class="form-input search-input" placeholder="🔍 Buscar cliente, pedido, texto...">
+      </div>
+    </section>
+
+    <!-- Nuvem de Tags da IA -->
+    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+      <span style="font-size: 0.85rem; color: var(--text-dim); font-weight: 600;">TAGS FREQUENTES:</span>
+      <div id="tagsCloud" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+    </div>
+
+    <!-- Lista de Avaliações -->
+    <section id="feedbacksList" class="feedbacks-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">⏳</div>
+        <h3>Carregando avaliações...</h3>
+        <p>Conectando ao backend da hamburgueria.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Rodapé -->
+  <footer>
+    <p>BurguerSync Gestão Ourinhos &copy; 2026 - Conectado ao Backend em <code id="apiDisplay">http://localhost:8000</code></p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    const apiDisplay = document.getElementById('apiDisplay');
+    const feedbacksList = document.getElementById('feedbacksList');
+    const crisisBanner = document.getElementById('crisisBanner');
+    const crisisBannerText = document.getElementById('crisisBannerText');
+    const filterTag = document.getElementById('filterTag');
+
+    let allTagsSet = new Set();
+
+    async function carregarDashboard() {
+      const apiBase = Config.getApiBaseUrl();
+      apiDisplay.textContent = apiBase;
+
+      // 1. Carregar Estatísticas
+      try {
+        const resStats = await fetch(`${apiBase}/api/stats`);
+        if (resStats.ok) {
+          const stats = await resStats.json();
+          renderStats(stats);
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar estatísticas:', e);
+      }
+
+      // 2. Carregar Lista de Feedbacks
+      await carregarFeedbacks();
+    }
+
+    function renderStats(stats) {
+      document.getElementById('valTotal').textContent = stats.total || 0;
+      document.getElementById('valPositivos').textContent = stats.positivos || 0;
+      document.getElementById('valNeutros').textContent = stats.neutros || 0;
+      document.getElementById('valCriticos').textContent = stats.criticos || 0;
+      
+      const total = stats.total || 1;
+      document.getElementById('valPosPct').textContent = `${Math.round((stats.positivos / total) * 100)}% do total`;
+      document.getElementById('valNeuPct').textContent = `${Math.round((stats.neutros / total) * 100)}% do total`;
+      
+      document.getElementById('valCritPendentes').textContent = `${stats.criticos} ocorrências registradas`;
+      document.getElementById('valMediaEstrelas').textContent = `★ ${stats.media_estrelas ? stats.media_estrelas.toFixed(1) : '0.0'}`;
+      document.getElementById('valResolucao').textContent = `${stats.taxa_resolucao || 0}%`;
+      document.getElementById('valTratadosCount').textContent = `${stats.tratados || 0} resolvidos de ${stats.total || 0}`;
+
+      // Nuvem de Tags
+      const tagsContainer = document.getElementById('tagsCloud');
+      tagsContainer.innerHTML = '';
+      if (stats.tags_contagem) {
+        for (const [tag, count] of Object.entries(stats.tags_contagem)) {
+          allTagsSet.add(tag);
+          const chip = document.createElement('span');
+          chip.className = 'tag-chip';
+          chip.style.cursor = 'pointer';
+          chip.textContent = `${tag} (${count})`;
+          chip.onclick = () => {
+            filterTag.value = tag;
+            carregarFeedbacks();
+          };
+          tagsContainer.appendChild(chip);
+        }
+        atualizarSelectTags();
+      }
+    }
+
+    function atualizarSelectTags() {
+      const valorAtual = filterTag.value;
+      filterTag.innerHTML = '<option value="Todas">Todas as Tags</option>';
+      allTagsSet.forEach(tag => {
+        const opt = document.createElement('option');
+        opt.value = tag;
+        opt.textContent = `🏷️ ${tag}`;
+        if (tag === valorAtual) opt.selected = true;
+        filterTag.appendChild(opt);
+      });
+    }
+
+    async function carregarFeedbacks() {
+      const apiBase = Config.getApiBaseUrl();
+      const sentimento = document.getElementById('filterSentimento').value;
+      const statusTratado = document.getElementById('filterStatus').value;
+      const tag = document.getElementById('filterTag').value;
+      const ordenacao = document.getElementById('filterOrdenacao').value;
+      const search = document.getElementById('searchInput').value.trim();
+
+      const params = new URLSearchParams();
+      if (sentimento !== 'Todos') params.append('sentimento', sentimento);
+      if (tag !== 'Todas') params.append('tag', tag);
+      if (search) params.append('search', search);
+      if (ordenacao) params.append('ordenacao', ordenacao);
+
+      if (statusTratado === 'pendente') params.append('tratado', 'false');
+      if (statusTratado === 'tratado') params.append('tratado', 'true');
+
+      try {
+        const response = await fetch(`${apiBase}/api/feedbacks?${params.toString()}`);
+        if (!response.ok) throw new Error(`Status ${response.status}`);
+        const feedbacks = await response.json();
+        renderFeedbacks(feedbacks);
+      } catch (err) {
+        feedbacksList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <h3>Não foi possível carregar os feedbacks</h3>
+            <p>Verifique se o backend está executando em <code>${apiBase}</code>.</p>
+            <p style="font-size: 0.8rem; color: #ef4444; margin-top: 8px;">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderFeedbacks(items) {
+      if (!items || items.length === 0) {
+        feedbacksList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🍔</div>
+            <h3>Nenhum feedback encontrado</h3>
+            <p>Ajuste os filtros de busca ou envie uma nova avaliação pelo formulário público.</p>
+          </div>
+        `;
+        crisisBanner.style.display = 'none';
+        return;
+      }
+
+      // Checar se há críticos pendentes
+      const criticosPendentes = items.filter(f => f.sentimento === 'Crítico' && !f.tratado);
+      if (criticosPendentes.length > 0) {
+        crisisBanner.style.display = 'flex';
+        crisisBannerText.textContent = `Atenção: Você tem ${criticosPendentes.length} feedback(s) CRÍTICO(S) pendente(s) de contato com o cliente em Ourinhos!`;
+      } else {
+        crisisBanner.style.display = 'none';
+      }
+
+      feedbacksList.innerHTML = '';
+
+      items.forEach(item => {
+        const card = document.createElement('article');
+        const isCritico = item.sentimento === 'Crítico';
+        const isTratado = item.tratado === true;
+
+        card.className = `feedback-item ${isCritico && !isTratado ? 'critico-unsolved' : ''} ${isTratado ? 'item-treated' : ''}`;
+
+        // Badge de Sentimento
+        let badgeClass = 'badge-neutro';
+        if (item.sentimento === 'Positivo') badgeClass = 'badge-positivo';
+        if (item.sentimento === 'Crítico') badgeClass = 'badge-critico';
+
+        // Estrelas
+        const estrelasCount = item.estrelas || 5;
+        const estrelasHtml = '★'.repeat(estrelasCount) + '☆'.repeat(5 - estrelasCount);
+
+        // Tags
+        const tagsHtml = (item.tags || []).map(t => `<span class="tag-chip">${t}</span>`).join(' ');
+
+        // Contato WhatsApp
+        let contatoHtml = item.contato ? `<span>📞 ${item.contato}</span>` : '';
+        const numeroLimpo = item.contato ? item.contato.replace(/\D/g, '') : '';
+        if (numeroLimpo.length >= 10) {
+          contatoHtml = `<a href="https://wa.me/55${numeroLimpo}" target="_blank" style="color: var(--accent-gold); text-decoration: none; font-size: 0.85rem;">💬 WhatsApp (${item.contato})</a>`;
+        }
+
+        // Data formatada
+        let dataFormatada = 'Data não disponível';
+        if (item.data_criacao) {
+          try {
+            dataFormatada = new Date(item.data_criacao).toLocaleString('pt-BR');
+          } catch(e) {}
+        }
+
+        card.innerHTML = `
+          <div class="feedback-top">
+            <div class="feedback-author">
+              <div class="avatar">${item.nome ? item.nome.charAt(0).toUpperCase() : 'C'}</div>
+              <div class="author-meta">
+                <h4>${item.nome || 'Cliente Anônimo'} <span style="font-size: 0.8rem; color: var(--text-dim); font-weight: normal;">• Pedido #${item.pedido_id || 'N/A'}</span></h4>
+                <span>${dataFormatada} • ${contatoHtml}</span>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span style="color: var(--accent-gold); font-size: 1.1rem; letter-spacing: 2px;">${estrelasHtml}</span>
+              <span class="badge ${badgeClass}">${item.sentimento}</span>
+            </div>
+          </div>
+
+          <div class="feedback-content">
+            "${item.comentario}"
+          </div>
+
+          <div class="ai-insight">
+            <div><strong>💡 Diagnóstico IA:</strong> ${item.resumo || 'Sem resumo disponível.'}</div>
+            <div style="font-size: 0.78rem; color: var(--text-dim);">
+              <em>Justificativa:</em> ${item.justificativa || 'Análise de sentimento padrão'} • <em>Motor:</em> ${item.provedor || 'Gemini'}
+              ${item.alerta_disparado ? ' • <span style="color: var(--status-crit); font-weight: bold;">🚨 Alerta Gerencial Disparado</span>' : ''}
+            </div>
+          </div>
+
+          <div class="feedback-footer">
+            <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+              ${tagsHtml}
+            </div>
+
+            <label class="action-checkbox">
+              <input type="checkbox" ${isTratado ? 'checked' : ''} onchange="alternarStatusTratado('${item.id}', this.checked)">
+              <span style="color: ${isTratado ? 'var(--status-pos)' : 'var(--text-muted)'};">
+                ${isTratado ? '✅ Caso Tratado / Resolvido' : 'Marcar como Lido / Tratado'}
+              </span>
+            </label>
+          </div>
+        `;
+
+        feedbacksList.appendChild(card);
+      });
+    }
+
+    async function alternarStatusTratado(feedbackId, novoStatus) {
+      const apiBase = Config.getApiBaseUrl();
+      try {
+        const response = await fetch(`${apiBase}/api/feedbacks/${feedbackId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tratado: novoStatus })
+        });
+
+        if (!response.ok) throw new Error('Falha ao atualizar status');
+        await carregarDashboard();
+      } catch (err) {
+        alert(`Erro ao atualizar status: ${err.message}`);
+        carregarDashboard();
+      }
+    }
+
+    // Eventos de Filtro e Busca com Debounce
+    document.getElementById('filterSentimento').addEventListener('change', carregarFeedbacks);
+    document.getElementById('filterStatus').addEventListener('change', carregarFeedbacks);
+    document.getElementById('filterTag').addEventListener('change', carregarFeedbacks);
+    document.getElementById('filterOrdenacao').addEventListener('change', carregarFeedbacks);
+
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(carregarFeedbacks, 300);
+    });
+
+    document.getElementById('btnRefresh').addEventListener('click', carregarDashboard);
+
+    document.getElementById('btnConfigApi').addEventListener('click', () => {
+      const atual = Config.getApiBaseUrl();
+      const novo = prompt('Defina o endereço da API Backend (ex: http://localhost:8000):', atual);
+      if (novo !== null) {
+        Config.setApiBaseUrl(novo);
+        carregarDashboard();
+      }
+    });
+
+    // Inicialização
+    carregarDashboard();
+    // Auto refresh a cada 30 segundos
+    setInterval(carregarDashboard, 30000);
+  </script>
+</body>
+</html>

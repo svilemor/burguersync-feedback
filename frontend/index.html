@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BurguerSync Ourinhos - Avalie sua Experiência</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barra de Navegação -->
+  <header class="navbar">
+    <a href="index.html" class="brand">
+      <div class="brand-icon">🍔</div>
+      <div class="brand-text">
+        <h1>BurguerSync</h1>
+        <span>Unidade Ourinhos / SP</span>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="dashboard.html" class="nav-btn nav-btn-outline">
+        📊 Painel do Gerente
+      </a>
+      <button id="btnConfigApi" class="nav-btn nav-btn-outline" title="Configurar URL da API">
+        ⚙️ API
+      </button>
+    </nav>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="container">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Sua opinião faz o hambúrguer perfeito!</h2>
+        <p>Conte-nos como foi sua experiência com o nosso lanche e atendimento em Ourinhos.</p>
+      </div>
+
+      <!-- Banner de Feedback / Alerta -->
+      <div id="alertContainer" style="display: none;"></div>
+
+      <form id="feedbackForm">
+        <!-- Grid de Identificação -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="nome">Seu Nome</label>
+            <input type="text" id="nome" class="form-input" placeholder="Ex: Lucas Mendes" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="contato">WhatsApp / Telefone</label>
+            <input type="text" id="contato" class="form-input" placeholder="Ex: (14) 99888-7766" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="pedido_id">Número do Pedido ou Comanda</label>
+          <input type="text" id="pedido_id" class="form-input" placeholder="Ex: OUR-2045">
+        </div>
+
+        <!-- Avaliação em Estrelas -->
+        <div class="form-group">
+          <label class="form-label">Como você avalia a sua experiência geral? <span class="required">*</span></label>
+          <div class="stars-container" id="starsContainer">
+            <button type="button" class="star-btn active" data-value="1">★</button>
+            <button type="button" class="star-btn active" data-value="2">★</button>
+            <button type="button" class="star-btn active" data-value="3">★</button>
+            <button type="button" class="star-btn active" data-value="4">★</button>
+            <button type="button" class="star-btn active" data-value="5">★</button>
+            <span class="star-rating-text" id="starLabel">5 Estrelas - Excelente!</span>
+          </div>
+          <input type="hidden" id="estrelasVal" value="5">
+        </div>
+
+        <!-- Comentário Aberto -->
+        <div class="form-group">
+          <label class="form-label" for="comentario">
+            Detalhes da sua avaliação <span class="required">*</span>
+          </label>
+          <textarea id="comentario" class="form-textarea" placeholder="Descreva o sabor, a temperatura, a velocidade da entrega ou como foi o atendimento..." required></textarea>
+        </div>
+
+        <!-- Botão de Envio -->
+        <button type="submit" id="btnSubmit" class="btn-submit">
+          <span>🚀 Enviar Avaliação</span>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Rodapé -->
+  <footer>
+    <p>BurguerSync Ourinhos &copy; 2026 - Sistema de Feedback Inteligente potencializado por IA Gemini.</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    // Gerenciamento de Estrelas
+    const stars = document.querySelectorAll('.star-btn');
+    const starLabel = document.getElementById('starLabel');
+    const estrelasVal = document.getElementById('estrelasVal');
+    const labels = {
+      1: "1 Estrela - Péssimo",
+      2: "2 Estrelas - Ruim",
+      3: "3 Estrelas - Regular",
+      4: "4 Estrelas - Muito Bom",
+      5: "5 Estrelas - Excelente!"
+    };
+
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        const val = parseInt(star.getAttribute('data-value'));
+        estrelasVal.value = val;
+        starLabel.textContent = labels[val];
+        
+        stars.forEach(s => {
+          const sVal = parseInt(s.getAttribute('data-value'));
+          if (sVal <= val) {
+            s.classList.add('active');
+          } else {
+            s.classList.remove('active');
+          }
+        });
+      });
+    });
+
+    // Submissão do Formulário
+    const form = document.getElementById('feedbackForm');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const alertBox = document.getElementById('alertContainer');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        nome: document.getElementById('nome').value.trim(),
+        contato: document.getElementById('contato').value.trim(),
+        pedido_id: document.getElementById('pedido_id').value.trim() || 'N/A',
+        estrelas: parseInt(estrelasVal.value) || 5,
+        comentario: document.getElementById('comentario').value.trim()
+      };
+
+      if (!payload.comentario) {
+        mostrarAlerta('Por favor, escreva seu comentário sobre o lanche ou atendimento.', 'error');
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = '<span>⏳ Analisando avaliação com IA...</span>';
+
+      const apiBase = Config.getApiBaseUrl();
+
+      try {
+        const response = await fetch(`${apiBase}/api/feedbacks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.detail || `Erro HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const fb = data.feedback;
+
+        let extraMsg = '';
+        if (fb.sentimento === 'Crítico') {
+          extraMsg = '<br><strong>⚠️ Pedimos sinceras desculpas! Nosso gerente de Ourinhos foi alertado automaticamente e entrará em contato com prioridade.</strong>';
+        } else if (fb.sentimento === 'Positivo') {
+          extraMsg = '<br><strong>🎉 Muito obrigado pelo carinho! Ficamos muito felizes em saber que você gostou!</strong>';
+        }
+
+        mostrarAlerta(`
+          <div>
+            <strong>Obrigado pelo seu feedback, ${fb.nome}!</strong>
+            <p>Classificação do Sistema: <strong>${fb.sentimento}</strong> | Tags: ${fb.tags ? fb.tags.join(', ') : 'Geral'}</p>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Resumo gerado: "${fb.resumo}"</p>
+            ${extraMsg}
+          </div>
+        `, 'success');
+
+        form.reset();
+        // Reset estrelas para 5
+        stars.forEach(s => s.classList.add('active'));
+        estrelasVal.value = 5;
+        starLabel.textContent = labels[5];
+
+      } catch (err) {
+        mostrarAlerta(`Não foi possível enviar a avaliação. Verifique se o servidor backend em <code>${apiBase}</code> está em execução.<br>Detalhe: ${err.message}`, 'error');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<span>🚀 Enviar Avaliação</span>';
+      }
+    });
+
+    function mostrarAlerta(html, tipo) {
+      alertBox.style.display = 'block';
+      alertBox.className = `alert-box alert-${tipo}`;
+      alertBox.innerHTML = html;
+      alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Configuração de URL da API
+    document.getElementById('btnConfigApi').addEventListener('click', () => {
+      const atual = Config.getApiBaseUrl();
+      const novo = prompt('Defina o endereço da API Backend (ex: http://localhost:8000):', atual);
+      if (novo !== null) {
+        Config.setApiBaseUrl(novo);
+        alert(`URL da API definida para: ${Config.getApiBaseUrl()}`);
+      }
+    });
+  </script>
+</body>
+</html>
